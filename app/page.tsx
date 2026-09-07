@@ -9,11 +9,11 @@ import { FilterBar } from "@/components/FilterBar";
 import { ExpenseList } from "@/components/ExpenseList";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { ExportPanel } from "@/components/ExportPanel";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useToast } from "@/components/Toast";
 import { computeSummary } from "@/lib/analytics";
 import { Expense, ExpenseInput } from "@/lib/types";
-import { exportToCSV } from "@/lib/utils";
 
 export default function Home() {
   const {
@@ -33,6 +33,7 @@ export default function Home() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   const summary = useMemo(() => computeSummary(expenses), [expenses]);
 
@@ -65,15 +66,6 @@ export default function Home() {
     setDeletingExpense(null);
   }
 
-  function handleExport() {
-    if (filteredExpenses.length === 0) {
-      showToast("Nothing to export", "error");
-      return;
-    }
-    exportToCSV(filteredExpenses);
-    showToast(`Exported ${filteredExpenses.length} expense${filteredExpenses.length === 1 ? "" : "s"}`);
-  }
-
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -95,14 +87,14 @@ export default function Home() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={handleExport}
+              onClick={() => setIsExportOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 3v12m0 0-4-4m4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Export CSV
+              Export data
             </button>
             <button
               type="button"
@@ -167,6 +159,8 @@ export default function Home() {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeletingExpense(null)}
       />
+
+      <ExportPanel isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} expenses={expenses} />
     </div>
   );
 }
