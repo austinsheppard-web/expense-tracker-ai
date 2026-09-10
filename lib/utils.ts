@@ -1,5 +1,3 @@
-import { Expense } from "./types";
-
 export function generateId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
@@ -44,27 +42,6 @@ export function monthLabel(key: string): string {
   const [year, month] = key.split("-").map(Number);
   const date = new Date(year, month - 1, 1);
   return new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(date);
-}
-
-export function exportToCSV(expenses: Expense[], filename = "expenses.csv"): void {
-  const header = ["Date", "Category", "Description", "Amount"];
-  const rows = expenses.map((e) => [
-    e.date,
-    e.category,
-    `"${e.description.replace(/"/g, '""')}"`,
-    e.amount.toFixed(2),
-  ]);
-
-  const csvContent = [header, ...rows].map((row) => row.join(",")).join("\n");
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
 
 export function cn(...classes: Array<string | false | null | undefined>): string {
