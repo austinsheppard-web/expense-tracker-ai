@@ -47,3 +47,44 @@ export function monthLabel(key: string): string {
 export function cn(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(" ");
 }
+
+export function formatPercent(value: number, options?: { signed?: boolean }): string {
+  const sign = options?.signed && value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(0)}%`;
+}
+
+export function formatCompactCurrency(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(amount);
+}
+
+/** Adds `count` months to a "YYYY-MM" key, returning a new "YYYY-MM" key. */
+export function addMonthsToKey(key: string, count: number): string {
+  const [year, month] = key.split("-").map(Number);
+  const date = new Date(year, month - 1 + count, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function daysInMonth(year: number, monthIndex0: number): number {
+  return new Date(year, monthIndex0 + 1, 0).getDate();
+}
+
+export const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+/** Parses a "YYYY-MM-DD" date string as a local date (avoids UTC off-by-one). */
+export function parseLocalDate(isoDate: string): Date {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Date(year, (month ?? 1) - 1, day ?? 1);
+}
+
+export function addDaysISO(isoDate: string, count: number): string {
+  const date = parseLocalDate(isoDate);
+  date.setDate(date.getDate() + count);
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60 * 1000);
+  return local.toISOString().slice(0, 10);
+}

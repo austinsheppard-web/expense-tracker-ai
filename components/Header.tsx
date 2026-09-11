@@ -1,4 +1,17 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+const NAV_LINKS = [
+  { href: "/", label: "Overview" },
+  { href: "/analytics", label: "Analytics" },
+];
+
 export function Header() {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
@@ -14,6 +27,21 @@ export function Header() {
             <p className="text-xs leading-tight text-slate-400">Personal finance dashboard</p>
           </div>
         </div>
+
+        <nav className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm font-medium transition",
+                pathname === link.href ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </header>
   );

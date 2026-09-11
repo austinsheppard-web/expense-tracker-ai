@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { CATEGORIES, CATEGORY_COLORS, Category, Expense } from "@/lib/types";
+import { CATEGORIES, CATEGORY_COLORS, Category, Expense, ExpenseFilters } from "@/lib/types";
 import { EXPORT_FORMATS, ExportFormat, filterExpensesForExport, runExport } from "@/lib/export";
 import { cn, formatCurrency, formatDate, todayISO } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ interface ExportPanelProps {
   isOpen: boolean;
   onClose: () => void;
   expenses: Expense[];
+  initialFilters: ExpenseFilters;
 }
 
 const PREVIEW_LIMIT = 6;
@@ -18,7 +19,11 @@ function defaultFilename(): string {
   return `expenses-${todayISO()}`;
 }
 
-export function ExportPanel({ isOpen, onClose, expenses }: ExportPanelProps) {
+function categoriesFromFilter(category: ExpenseFilters["category"]): Set<Category> {
+  return category === "All" ? new Set(CATEGORIES) : new Set([category]);
+}
+
+export function ExportPanel({ isOpen, onClose, expenses, initialFilters }: ExportPanelProps) {
   const [format, setFormat] = useState<ExportFormat>("csv");
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
@@ -30,12 +35,15 @@ export function ExportPanel({ isOpen, onClose, expenses }: ExportPanelProps) {
   useEffect(() => {
     if (!isOpen) return;
     setFormat("csv");
-    setStartDate(null);
-    setEndDate(null);
-    setSelectedCategories(new Set(CATEGORIES));
+    setStartDate(initialFilters.startDate);
+    setEndDate(initialFilters.endDate);
+    setSelectedCategories(categoriesFromFilter(initialFilters.category));
     setFilename(defaultFilename());
     setIsExporting(false);
     setCompletedCount(null);
+    // Only re-seed when the panel opens, so edits inside it aren't clobbered
+    // by unrelated changes to the main filter bar while it's open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   useEffect(() => {

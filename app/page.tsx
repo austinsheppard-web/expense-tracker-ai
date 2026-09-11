@@ -160,7 +160,12 @@ export default function Home() {
         onCancel={() => setDeletingExpense(null)}
       />
 
-      <ExportPanel isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} expenses={expenses} />
+      <ExportPanel
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        expenses={expenses}
+        initialFilters={filters}
+      />
     </div>
   );
 }
