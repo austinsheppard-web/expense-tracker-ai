@@ -1,5 +1,5 @@
 import { CATEGORIES, Category, Expense } from "./types";
-import { monthKey, monthLabel, parseLocalDate, WEEKDAY_LABELS } from "./utils";
+import { addDaysISO, monthKey, monthLabel, parseLocalDate, todayISO, WEEKDAY_LABELS } from "./utils";
 
 export interface DailyTotal {
   date: string;
@@ -42,6 +42,47 @@ export interface DailyAnomaly {
   total: number;
   typicalDay: number;
   ratio: number;
+}
+
+export interface BudgetStreak {
+  days: number;
+  dailyBudget: number;
+  milestone: number;
+  progressPct: number; // 0-100 toward the next milestone
+}
+
+const STREAK_MILESTONES = [7, 14, 30, 60, 90, 180, 365];
+
+/**
+ * Counts consecutive days, walking backward from today, spent at or under the
+ * user's typical daily spend (the average of days that had any spending).
+ * Days with no expenses count as "under budget."
+ */
+export function computeBudgetStreak(expenses: Expense[]): BudgetStreak {
+  const daily = getDailyTotals(expenses);
+  const spendingDays = daily.filter((d) => d.total > 0);
+
+  if (spendingDays.length === 0) {
+    return { days: 0, dailyBudget: 0, milestone: STREAK_MILESTONES[0], progressPct: 0 };
+  }
+
+  const dailyBudget = spendingDays.reduce((sum, d) => sum + d.total, 0) / spendingDays.length;
+  const totalsByDate = new Map(daily.map((d) => [d.date, d.total]));
+  const earliestDate = daily[0].date;
+
+  let days = 0;
+  let cursor = todayISO();
+  while (cursor >= earliestDate) {
+    const total = totalsByDate.get(cursor) ?? 0;
+    if (total > dailyBudget) break;
+    days += 1;
+    cursor = addDaysISO(cursor, -1);
+  }
+
+  const milestone = STREAK_MILESTONES.find((m) => m > days) ?? days + 30;
+  const progressPct = Math.min(100, (days / milestone) * 100);
+
+  return { days, dailyBudget, milestone, progressPct };
 }
 
 /** Sums expenses per calendar day. Only days with at least one expense are included. */

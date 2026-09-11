@@ -23,6 +23,40 @@ export interface Summary {
   byMonth: MonthlyTotal[];
 }
 
+export interface MonthlyCategorySummary {
+  label: string;
+  total: number;
+  byCategory: CategoryTotal[];
+}
+
+/** Category breakdown scoped to the calendar month of `referenceDate` (defaults to now). */
+export function computeMonthlyCategorySummary(
+  expenses: Expense[],
+  referenceDate: Date = new Date()
+): MonthlyCategorySummary {
+  const monthExpenses = expenses.filter((e) => isSameMonth(e.date, referenceDate));
+  const total = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+  const categoryMap = new Map<Category, number>();
+  for (const category of CATEGORIES) categoryMap.set(category, 0);
+  for (const e of monthExpenses) {
+    categoryMap.set(e.category, (categoryMap.get(e.category) ?? 0) + e.amount);
+  }
+
+  const byCategory: CategoryTotal[] = CATEGORIES.map((category) => {
+    const catTotal = categoryMap.get(category) ?? 0;
+    return {
+      category,
+      total: catTotal,
+      percentage: total > 0 ? (catTotal / total) * 100 : 0,
+    };
+  }).sort((a, b) => b.total - a.total);
+
+  const label = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(referenceDate);
+
+  return { total, byCategory, label };
+}
+
 export function computeSummary(expenses: Expense[]): Summary {
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   const now = new Date();
